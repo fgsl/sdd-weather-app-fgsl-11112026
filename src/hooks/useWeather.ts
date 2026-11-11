@@ -7,7 +7,7 @@ import {
   WeatherServiceError,
 } from '../services/weatherService';
 
-export type WeatherStatus = 'idle' | 'loading' | 'success' | 'error' | 'empty';
+export type WeatherStatus = 'idle' | 'loading' | 'selecting' | 'success' | 'error' | 'empty';
 
 interface UseWeatherResult {
   status: WeatherStatus;
@@ -82,6 +82,10 @@ export function useWeather(): UseWeatherResult {
       setCities(results);
       if (results.length === 0) {
         setStatus('empty');
+        return;
+      }
+      if (results.length > 1) {
+        setStatus('selecting');
         return;
       }
       const city = results[0];

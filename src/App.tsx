@@ -16,7 +16,7 @@ import EmptyState from './components/states/EmptyState';
  * Copilot, do briefing à entrega.
  */
 export default function App() {
-  const { status, data, error, query, search, retry } = useWeather();
+  const { status, data, cities, error, query, search, selectCity, retry } = useWeather();
   const [unit, setUnit] = useState<Unit>('celsius');
 
   return (
@@ -53,6 +53,27 @@ export default function App() {
             title={`Nenhuma cidade encontrada para "${query}"`}
             hint="Verifique a grafia e tente novamente."
           />
+        )}
+        {status === 'selecting' && (
+          <section aria-label="Resultados da busca" className="space-y-3">
+            <h2 className="text-lg font-semibold">Selecione uma cidade</h2>
+            <ul className="grid gap-3 sm:grid-cols-2">
+              {cities.map((city) => (
+                <li key={city.id}>
+                  <button
+                    type="button"
+                    onClick={() => void selectCity(city)}
+                    className="w-full rounded-xl border border-white/10 bg-white/[0.055] p-4 text-left transition hover:border-accent-400/60 hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-400"
+                  >
+                    <span className="block font-semibold">{city.name}</span>
+                    <span className="mt-1 block text-sm text-white/55">
+                      {[city.admin1, city.country].filter(Boolean).join(', ')}
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </section>
         )}
         {status === 'error' && error && <ErrorState message={error} onRetry={retry} />}
         {status === 'success' && data && (
