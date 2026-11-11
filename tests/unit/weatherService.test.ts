@@ -114,15 +114,16 @@ describe('weatherService', () => {
       expect(result.forecast[4]?.precipitationProbability).toBeNull();
     });
 
-    it('rejeita campos atuais ausentes ou inválidos', async () => {
+    it('preserva campos meteorológicos ausentes para a UI exibir como indisponíveis', async () => {
       vi.stubGlobal(
         'fetch',
         mockFetchOnce({ ...FORECAST_RESPONSE, current: { ...FORECAST_RESPONSE.current, temperature_2m: null } }),
       );
-      await expect(getWeather(CITY)).rejects.toMatchObject({ code: 'invalid-response' });
+      const result = await getWeather(CITY);
+      expect(result.current.temperature).toBeNull();
     });
 
-    it('rejeita séries incompletas em vez de apresentar previsão parcial como completa', async () => {
+    it('preserva valores parciais, mas não aceita menos de cinco datas', async () => {
       vi.stubGlobal(
         'fetch',
         mockFetchOnce({
@@ -131,6 +132,17 @@ describe('weatherService', () => {
             ...FORECAST_RESPONSE.daily,
             temperature_2m_min: FORECAST_RESPONSE.daily.temperature_2m_min.slice(0, 4),
           },
+        }),
+      );
+      const result = await getWeather(CITY);
+      expect(result.forecast).toHaveLength(5);
+      expect(result.forecast[4]?.min).toBeNull();
+
+      vi.stubGlobal(
+        'fetch',
+        mockFetchOnce({
+          ...FORECAST_RESPONSE,
+          daily: { ...FORECAST_RESPONSE.daily, time: FORECAST_RESPONSE.daily.time.slice(0, 4) },
         }),
       );
       await expect(getWeather(CITY)).rejects.toMatchObject({ code: 'invalid-response' });

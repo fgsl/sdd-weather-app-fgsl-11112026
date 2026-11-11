@@ -7,7 +7,7 @@ import {
   WeatherServiceError,
 } from '../services/weatherService';
 
-export type WeatherStatus = 'idle' | 'loading' | 'success' | 'error' | 'empty';
+export type WeatherStatus = 'idle' | 'loading' | 'results' | 'success' | 'error' | 'empty';
 
 interface UseWeatherResult {
   status: WeatherStatus;
@@ -84,14 +84,12 @@ export function useWeather(): UseWeatherResult {
         setStatus('empty');
         return;
       }
-      const city = results[0];
-      if (city) await loadWeather(city, controller);
+      setStatus('results');
     } catch (requestError) {
       if (requestError instanceof WeatherRequestCancelledError || !isCurrentRequest(controller)) return;
       setStatus('error');
       setError(toMessage(requestError));
     }
-
   }
 
   async function selectCity(city: City): Promise<void> {

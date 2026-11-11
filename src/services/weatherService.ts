@@ -71,6 +71,12 @@ function isFiniteNumber(value: unknown): value is number {
   return typeof value === 'number' && Number.isFinite(value);
 }
 
+function nullableNumber(value: unknown): number | null {
+  if (value === null || value === undefined) return null;
+  if (isFiniteNumber(value)) return value;
+  return invalidResponse();
+}
+
 function isOptionalString(value: unknown): value is string | undefined {
   return value === undefined || typeof value === 'string';
 }
@@ -126,28 +132,18 @@ export async function searchCities(name: string, signal?: AbortSignal): Promise<
 }
 
 function mapCurrent(value: unknown): CurrentWeather {
-  if (
-    !isRecord(value) ||
-    typeof value.time !== 'string' ||
-    value.time.trim() === '' ||
-    !isFiniteNumber(value.temperature_2m) ||
-    !isFiniteNumber(value.relative_humidity_2m) ||
-    !isFiniteNumber(value.wind_speed_10m) ||
-    !isFiniteNumber(value.surface_pressure) ||
-    !isFiniteNumber(value.precipitation) ||
-    !isFiniteNumber(value.weather_code)
-  ) {
+  if (!isRecord(value) || typeof value.time !== 'string' || value.time.trim() === '') {
     return invalidResponse();
   }
 
   return {
     time: value.time,
-    temperature: value.temperature_2m,
-    humidity: value.relative_humidity_2m,
-    windSpeed: value.wind_speed_10m,
-    pressure: value.surface_pressure,
-    precipitation: value.precipitation,
-    weatherCode: value.weather_code,
+    temperature: nullableNumber(value.temperature_2m),
+    humidity: nullableNumber(value.relative_humidity_2m),
+    windSpeed: nullableNumber(value.wind_speed_10m),
+    pressure: nullableNumber(value.surface_pressure),
+    precipitation: nullableNumber(value.precipitation),
+    weatherCode: nullableNumber(value.weather_code),
   };
 }
 
@@ -156,36 +152,27 @@ function mapForecast(value: unknown): ForecastDay[] {
 
   const { time, weather_code, temperature_2m_max, temperature_2m_min, precipitation_probability_max } =
     value;
-  if (
-    !Array.isArray(time) ||
-    !Array.isArray(weather_code) ||
-    !Array.isArray(temperature_2m_max) ||
-    !Array.isArray(temperature_2m_min) ||
-    !Array.isArray(precipitation_probability_max)
-  ) {
+  if (!Array.isArray(time) || time.length !== 5) return invalidResponse();
+  const series = [weather_code, temperature_2m_max, temperature_2m_min, precipitation_probability_max];
+  if (series.some((items) => items !== undefined && items !== null && !Array.isArray(items))) {
     return invalidResponse();
   }
+  if (series.some((items) => Array.isArray(items) && items.length > 5)) return invalidResponse();
 
-  const series = [time, weather_code, temperature_2m_max, temperature_2m_min, precipitation_probability_max];
-  if (series.some((items) => items.length !== 5)) return invalidResponse();
+  const weatherCodes = Array.isArray(weather_code) ? weather_code : [];
+  const maximums = Array.isArray(temperature_2m_max) ? temperature_2m_max : [];
+  const minimums = Array.isArray(temperature_2m_min) ? temperature_2m_min : [];
+  const precipitation = Array.isArray(precipitation_probability_max) ? precipitation_probability_max : [];
 
   return time.map((date, index): ForecastDay => {
-    const weatherCode = weather_code[index];
-    const max = temperature_2m_max[index];
-    const min = temperature_2m_min[index];
-    const precipitationProbability = precipitation_probability_max[index];
-    if (
-      typeof date !== 'string' ||
-      !/^\d{4}-\d{2}-\d{2}$/.test(date) ||
-      !isFiniteNumber(weatherCode) ||
-      !isFiniteNumber(max) ||
-      !isFiniteNumber(min) ||
-      !(precipitationProbability === null || isFiniteNumber(precipitationProbability))
-    ) {
-      return invalidResponse();
-    }
-
-    return { date, weatherCode, max, min, precipitationProbability };
+    if (typeof date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(date)) return invalidResponse();
+    return {
+      date,
+      weatherCode: nullableNumber(weatherCodes[index]),
+      max: nullableNumber(maximums[index]),
+      min: nullableNumber(minimums[index]),
+      precipitationProbability: nullableNumber(precipitation[index]),
+    };
   });
 }
 

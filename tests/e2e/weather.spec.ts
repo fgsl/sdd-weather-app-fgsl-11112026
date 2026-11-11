@@ -70,6 +70,7 @@ test('fluxo completo: buscar → clima atual → previsão → trocar unidade', 
 
   await page.getByLabel(/buscar cidade/i).fill('Seattle');
   await page.getByRole('button', { name: /buscar/i }).click();
+  await page.getByRole('button', { name: /Seattle.*Washington/i }).click();
 
   await expect(page.getByRole('heading', { name: 'Seattle' })).toBeVisible();
   const forecastRegion = page.getByRole('region', { name: /previsão de 5 dias/i });
@@ -165,10 +166,12 @@ test('mantém Fahrenheit ao consultar outra cidade', async ({ page }) => {
 
   await page.getByLabel(/buscar cidade/i).fill('Seattle');
   await page.getByRole('button', { name: /buscar/i }).click();
+  await page.getByRole('button', { name: /Seattle.*Washington/i }).click();
   await expect(page.getByRole('heading', { name: 'Seattle' })).toBeVisible();
   await page.getByRole('button', { name: '°F' }).click();
   await page.getByLabel(/buscar cidade/i).fill('Lisboa');
   await page.getByRole('button', { name: /buscar/i }).click();
+  await page.getByRole('button', { name: /Lisboa, Portugal/i }).click();
 
   await expect(page.getByRole('heading', { name: 'Lisboa' })).toBeVisible();
   await expect(page.getByText('68°').first()).toBeVisible();
@@ -193,6 +196,7 @@ test('viewport mobile renderiza o fluxo principal', async ({ page }) => {
 
   await page.getByLabel(/buscar cidade/i).fill('Seattle');
   await page.getByRole('button', { name: /buscar/i }).click();
+  await page.getByRole('button', { name: /Seattle.*Washington/i }).tap();
   await expect(page.getByRole('heading', { name: 'Seattle' })).toBeVisible();
   await page.getByRole('button', { name: '°F' }).tap();
   await expect(page.getByText('32°').first()).toBeVisible();

@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import App from '../../src/App';
@@ -71,7 +71,7 @@ describe('App', () => {
 
   it('mostra a barra de busca e o alternador de unidade', () => {
     render(<App />);
-    expect(screen.getByLabelText(/buscar cidade/i)).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: /buscar cidade/i })).toBeInTheDocument();
     expect(screen.getByRole('group', { name: /unidade de temperatura/i })).toBeInTheDocument();
   });
 
@@ -84,8 +84,9 @@ describe('App', () => {
     vi.stubGlobal('fetch', fetchMock);
     render(<App />);
 
-    await user.type(screen.getByLabelText(/buscar cidade/i), 'Seattle');
+    await user.type(screen.getByRole('textbox', { name: /buscar cidade/i }), 'Seattle');
     await user.click(screen.getByRole('button', { name: /buscar/i }));
+    await user.click(await screen.findByRole('button', { name: /Seattle.*Washington/i }));
 
     expect(await screen.findByRole('heading', { name: 'Seattle' })).toBeInTheDocument();
     expect(screen.getByRole('region', { name: /previsão de 5 dias/i })).toBeInTheDocument();
@@ -130,14 +131,16 @@ describe('App', () => {
     vi.stubGlobal('fetch', fetchMock);
     render(<App />);
 
-    await user.type(screen.getByLabelText(/buscar cidade/i), 'Seattle');
+    await user.type(screen.getByRole('textbox', { name: /buscar cidade/i }), 'Seattle');
     await user.click(screen.getByRole('button', { name: /buscar/i }));
+    await user.click(await screen.findByRole('button', { name: /Seattle.*Washington/i }));
     await screen.findByRole('heading', { name: 'Seattle' });
     await user.click(screen.getByRole('button', { name: '°F' }));
 
-    await user.clear(screen.getByLabelText(/buscar cidade/i));
-    await user.type(screen.getByLabelText(/buscar cidade/i), 'Lisboa');
+    await user.clear(screen.getByRole('textbox', { name: /buscar cidade/i }));
+    await user.type(screen.getByRole('textbox', { name: /buscar cidade/i }), 'Lisboa');
     await user.click(screen.getByRole('button', { name: /buscar/i }));
+    await user.click(await screen.findByRole('button', { name: /Lisboa, Portugal/i }));
 
     expect(await screen.findByRole('heading', { name: 'Lisboa' })).toBeInTheDocument();
     expect(screen.getAllByText('68°')).toHaveLength(2);
@@ -156,8 +159,9 @@ describe('App', () => {
     vi.stubGlobal('fetch', fetchMock);
     render(<App />);
 
-    await user.type(screen.getByLabelText(/buscar cidade/i), 'Seattle');
+    await user.type(screen.getByRole('textbox', { name: /buscar cidade/i }), 'Seattle');
     await user.click(screen.getByRole('button', { name: /buscar/i }));
+    await user.click(await screen.findByRole('button', { name: /Seattle.*Washington/i }));
     expect(await screen.findByRole('status')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: '°F' }));
     resolveForecast(jsonResponse(FORECAST_RESPONSE));
@@ -174,7 +178,7 @@ describe('App', () => {
     vi.stubGlobal('fetch', fetchMock);
     render(<App />);
 
-    await user.type(screen.getByLabelText(/buscar cidade/i), 'Springfield');
+    await user.type(screen.getByRole('textbox', { name: /buscar cidade/i }), 'Springfield');
     await user.click(screen.getByRole('button', { name: /buscar/i }));
 
     const selectedCity = await screen.findByRole('button', { name: /Springfield.*Massachusetts/i });
@@ -193,7 +197,7 @@ describe('App', () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValueOnce(jsonResponse({})));
     render(<App />);
 
-    await user.type(screen.getByLabelText(/buscar cidade/i), 'xyzxyz');
+    await user.type(screen.getByRole('textbox', { name: /buscar cidade/i }), 'xyzxyz');
     await user.click(screen.getByRole('button', { name: /buscar/i }));
     expect(await screen.findByText(/nenhuma cidade encontrada/i)).toBeInTheDocument();
   });
@@ -208,11 +212,102 @@ describe('App', () => {
     vi.stubGlobal('fetch', fetchMock);
     render(<App />);
 
-    await user.type(screen.getByLabelText(/buscar cidade/i), 'Seattle');
+    await user.type(screen.getByRole('textbox', { name: /buscar cidade/i }), 'Seattle');
     await user.click(screen.getByRole('button', { name: /buscar/i }));
+    await user.click(await screen.findByRole('button', { name: /Seattle.*Washington/i }));
     await user.click(await screen.findByRole('button', { name: /tentar novamente/i }));
 
     expect(await screen.findByRole('heading', { name: 'Seattle' })).toBeInTheDocument();
     expect(fetchMock).toHaveBeenCalledTimes(3);
+  });
+
+  it('mostra traços para métricas ausentes sem esconder os dados disponíveis', async () => {
+    const user = userEvent.setup();
+    const partialForecast = {
+      ...FORECAST_RESPONSE,
+      current: { ...FORECAST_RESPONSE.current, temperature_2m: null, relative_humidity_2m: null },
+      daily: {
+        ...FORECAST_RESPONSE.daily,
+        temperature_2m_min: [12, null, 13, 14, 15],
+        precipitation_probability_max: [20, null, 70, 10, 0],
+      },
+    };
+    vi.stubGlobal(
+      'fetch',
+      vi
+        .fn()
+        .mockResolvedValueOnce(jsonResponse(GEOCODING_RESPONSE))
+        .mockResolvedValueOnce(jsonResponse(partialForecast)),
+    );
+    render(<App />);
+
+    await user.type(screen.getByRole('textbox', { name: /buscar cidade/i }), 'Seattle');
+    await user.click(screen.getByRole('button', { name: /buscar/i }));
+    await user.click(await screen.findByRole('button', { name: /Seattle.*Washington/i }));
+
+    const currentRegion = await screen.findByRole('region', { name: /clima atual/i });
+    expect(currentRegion).toHaveTextContent('Umidade—');
+    expect(currentRegion).toHaveTextContent('—');
+    const forecastRegion = screen.getByRole('region', { name: /previsão de 5 dias/i });
+    const forecastDays = within(forecastRegion).getAllByRole('listitem');
+    expect(forecastDays).toHaveLength(5);
+    expect(forecastDays[1]).toHaveTextContent('—');
+    expect(forecastDays[1]).toHaveTextContent('19°');
+  });
+
+  it('ignora a previsão antiga quando uma nova cidade é selecionada durante o carregamento', async () => {
+    const user = userEvent.setup();
+    let resolveSeattleForecast: (response: Response) => void = () => {};
+    const pendingSeattleForecast = new Promise<Response>((resolve) => {
+      resolveSeattleForecast = resolve;
+    });
+    const fetchMock = vi.fn((input: RequestInfo | URL) => {
+      const url = new URL(String(input));
+      if (url.hostname.startsWith('geocoding-api')) {
+        return Promise.resolve(
+          jsonResponse(
+            url.searchParams.get('name') === 'Lisboa'
+              ? {
+                  results: [
+                    {
+                      id: 2,
+                      name: 'Lisboa',
+                      country: 'Portugal',
+                      latitude: 38.72,
+                      longitude: -9.14,
+                    },
+                  ],
+                }
+              : GEOCODING_RESPONSE,
+          ),
+        );
+      }
+      return url.searchParams.get('latitude') === '47.6'
+        ? pendingSeattleForecast
+        : Promise.resolve(
+            jsonResponse({
+              ...FORECAST_RESPONSE,
+              current: { ...FORECAST_RESPONSE.current, temperature_2m: 20 },
+            }),
+          );
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    render(<App />);
+
+    const searchInput = screen.getByRole('textbox', { name: /buscar cidade/i });
+    await user.type(searchInput, 'Seattle');
+    await user.click(screen.getByRole('button', { name: /buscar/i }));
+    await user.click(await screen.findByRole('button', { name: /Seattle.*Washington/i }));
+    await screen.findByRole('status');
+
+    await user.clear(searchInput);
+    await user.type(searchInput, 'Lisboa');
+    await user.click(screen.getByRole('button', { name: /buscar/i }));
+    await user.click(await screen.findByRole('button', { name: /Lisboa, Portugal/i }));
+    expect(await screen.findByRole('heading', { name: 'Lisboa' })).toBeInTheDocument();
+
+    await act(async () => resolveSeattleForecast(jsonResponse(FORECAST_RESPONSE)));
+    expect(screen.getByRole('heading', { name: 'Lisboa' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Seattle' })).not.toBeInTheDocument();
   });
 });
