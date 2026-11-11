@@ -95,7 +95,7 @@ Convenções (conforme [.github/copilot-instructions.md](/workspaces/sdd-weather
 
 ## 4. Visão de componentes e camadas
 
-![Diagrama de componentes e camadas](/workspaces/sdd-weather-app-fgsl-11112026/diagrams/01-componentes.png)
+![Diagrama de componentes e camadas](diagrams/01-componentes.png)
 
 Fonte: [diagrams/01-componentes.mmd](/workspaces/sdd-weather-app-fgsl-11112026/diagrams/01-componentes.mmd)
 
@@ -110,7 +110,7 @@ A dependência é unidirecional: componentes e hook dependem de `types/` e `lib/
 
 ## 5. Modelo de classes (UML)
 
-![Diagrama de classes](/workspaces/sdd-weather-app-fgsl-11112026/diagrams/02-classes.png)
+![Diagrama de classes](diagrams/02-classes.png)
 
 Fonte: [diagrams/02-classes.mmd](/workspaces/sdd-weather-app-fgsl-11112026/diagrams/02-classes.mmd)
 
@@ -130,7 +130,7 @@ Observações sobre o modelo:
 
 ## 6. Fluxos de dados
 
-![Diagrama de sequência do fluxo de dados](/workspaces/sdd-weather-app-fgsl-11112026/diagrams/03-fluxo-dados.png)
+![Diagrama de sequência do fluxo de dados](diagrams/03-fluxo-dados.png)
 
 Fonte: [diagrams/03-fluxo-dados.mmd](/workspaces/sdd-weather-app-fgsl-11112026/diagrams/03-fluxo-dados.mmd)
 
@@ -150,7 +150,7 @@ Troca de unidade: `UnitToggle` altera o `unit` em `App`, e os componentes reconv
 
 ## 7. Máquina de estados do hook
 
-![Diagrama de estados do useWeather](/workspaces/sdd-weather-app-fgsl-11112026/diagrams/04-estados-usewather.png)
+![Diagrama de estados do useWeather](diagrams/04-estados-usewather.png)
 
 Fonte: [diagrams/04-estados-usewather.mmd](/workspaces/sdd-weather-app-fgsl-11112026/diagrams/04-estados-usewather.mmd)
 
