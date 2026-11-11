@@ -1,6 +1,12 @@
 name: Validate Spec
 
 on:
+  push:
+    paths:
+      - 'specs/**'
+      - 'plans/**'
+      - 'tasks/**'
+      - 'src/**'
   pull_request:
     paths:
       - 'specs/**'

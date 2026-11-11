@@ -1,6 +1,11 @@
 name: Validate Plan
 
 on:
+  push:
+    paths:
+      - 'plans/**'
+      - 'tasks/**'
+      - 'src/**'
   pull_request:
     paths:
       - 'plans/**'

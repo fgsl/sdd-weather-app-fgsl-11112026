@@ -1,6 +1,10 @@
 name: Validate Tasks
 
 on:
+  push:
+    paths:
+      - 'tasks/**'
+      - 'src/**'
   pull_request:
     paths:
       - 'tasks/**'
