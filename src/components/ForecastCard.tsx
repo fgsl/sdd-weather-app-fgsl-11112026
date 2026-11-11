@@ -22,7 +22,9 @@ export default function ForecastCard({ day, index, unit }: ForecastCardProps) {
         <span className="font-semibold">{formatTemperature(day.max, unit)}</span>{' '}
         <span className="text-white/50">{formatTemperature(day.min, unit)}</span>
       </p>
-      <p className="mt-auto text-xs text-accent-400">💧 {day.precipitationProbability}%</p>
+      <p className="mt-auto text-xs text-accent-400">
+        💧 {day.precipitationProbability === null ? '—' : `${day.precipitationProbability}%`}
+      </p>
     </li>
   );
 }

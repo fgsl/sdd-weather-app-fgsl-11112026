@@ -36,7 +36,7 @@ export interface ForecastDay {
   min: number;
   max: number;
   weatherCode: number;
-  precipitationProbability: number;
+  precipitationProbability: number | null;
 }
 
 /** Agregado entregue à UI: cidade + clima atual + 5 dias de previsão. */
