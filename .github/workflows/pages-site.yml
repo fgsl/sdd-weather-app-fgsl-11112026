@@ -1,9 +1,7 @@
 name: Deploy to GitHub Pages
 
 on:
-  workflow_run:
-    workflows: ["SDD Guard"]
-    types: [completed]
+  push:
     branches: [main]
   workflow_dispatch:
 
@@ -18,30 +16,37 @@ concurrency:
 
 jobs:
   build:
-    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-26.04
     steps:
       - uses: actions/checkout@v6
-        with:
-          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
           node-version-file: ".nvmrc"
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      # O app é publicado em /<repo>/app/, então o base do Vite precisa refletir esse caminho.
       - run: pnpm build
+        env:
+          VITE_BASE: /${{ github.event.repository.name }}/app/
       - uses: actions/configure-pages@v5
+        with:
+          enablement: true
+      - name: Montar site (docs na raiz, app em /app)
+        run: |
+          rm -rf _site
+          mkdir -p _site/app
+          cp -r docs/. _site/
+          cp -r dist/. _site/app/
       - uses: actions/upload-pages-artifact@v4
         with:
-          path: dist
+          path: _site
 
   deploy:
-    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    needs: build
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    needs: build
     runs-on: ubuntu-26.04
     steps:
       - id: deployment
