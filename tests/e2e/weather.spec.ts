@@ -68,7 +68,7 @@ test('fluxo completo: buscar → clima atual → previsão → trocar unidade', 
   await mockApis(page, forecastLatitudes);
   await page.goto('/');
 
-  await page.getByLabel(/buscar cidade/i).fill('Seattle');
+  await page.getByRole('textbox', { name: /buscar cidade/i }).fill('Seattle');
   await page.getByRole('button', { name: /buscar/i }).click();
   await page.getByRole('button', { name: /Seattle.*Washington/i }).click();
 
@@ -76,7 +76,7 @@ test('fluxo completo: buscar → clima atual → previsão → trocar unidade', 
   const forecastRegion = page.getByRole('region', { name: /previsão de 5 dias/i });
   await expect(forecastRegion).toBeVisible();
   await expect(forecastRegion.getByRole('listitem')).toHaveCount(5);
-  await expect(forecastRegion.getByTitle('Chuva fraca')).toBeVisible();
+  await expect(forecastRegion.getByTitle('Chuva fraca', { exact: true })).toBeVisible();
   await expect(forecastRegion.getByText('20°')).toBeVisible();
 
   // 0°C exibido; após trocar para °F deve virar 32°.
@@ -98,7 +98,7 @@ test('homônimos podem ser diferenciados e selecionados pelo teclado', async ({ 
   });
   await page.goto('/');
 
-  await page.getByLabel(/buscar cidade/i).fill('Springfield');
+  await page.getByRole('textbox', { name: /buscar cidade/i }).fill('Springfield');
   await page.getByRole('button', { name: /buscar/i }).click();
 
   const massachusetts = page.getByRole('button', { name: /Springfield.*Massachusetts/i });
@@ -111,7 +111,9 @@ test('homônimos podem ser diferenciados e selecionados pelo teclado', async ({ 
   expect(forecastLatitudes).toEqual(['42.1']);
 });
 
-test('viewport mobile permite selecionar um homônimo por toque', async ({ page }) => {
+test('viewport mobile permite selecionar um homônimo por toque', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile');
+
   const forecastLatitudes: string[] = [];
   await page.route('**/geocoding-api.open-meteo.com/**', (route) =>
     route.fulfill({ json: springfieldResults }),
@@ -123,7 +125,7 @@ test('viewport mobile permite selecionar um homônimo por toque', async ({ page 
   await page.setViewportSize({ width: 375, height: 812 });
   await page.goto('/');
 
-  await page.getByLabel(/buscar cidade/i).fill('Springfield');
+  await page.getByRole('textbox', { name: /buscar cidade/i }).fill('Springfield');
   await page.getByRole('button', { name: /buscar/i }).tap();
   const illinois = page.getByRole('button', { name: /Springfield.*Illinois/i });
   await expect(illinois).toBeVisible();
@@ -164,12 +166,12 @@ test('mantém Fahrenheit ao consultar outra cidade', async ({ page }) => {
   });
   await page.goto('/');
 
-  await page.getByLabel(/buscar cidade/i).fill('Seattle');
+  await page.getByRole('textbox', { name: /buscar cidade/i }).fill('Seattle');
   await page.getByRole('button', { name: /buscar/i }).click();
   await page.getByRole('button', { name: /Seattle.*Washington/i }).click();
   await expect(page.getByRole('heading', { name: 'Seattle' })).toBeVisible();
   await page.getByRole('button', { name: '°F' }).click();
-  await page.getByLabel(/buscar cidade/i).fill('Lisboa');
+  await page.getByRole('textbox', { name: /buscar cidade/i }).fill('Lisboa');
   await page.getByRole('button', { name: /buscar/i }).click();
   await page.getByRole('button', { name: /Lisboa, Portugal/i }).click();
 
@@ -182,19 +184,21 @@ test('estado vazio quando a cidade não existe', async ({ page }) => {
   await page.route('**/geocoding-api.open-meteo.com/**', (route) => route.fulfill({ json: {} }));
   await page.goto('/');
 
-  await page.getByLabel(/buscar cidade/i).fill('xyzxyz');
+  await page.getByRole('textbox', { name: /buscar cidade/i }).fill('xyzxyz');
   await page.getByRole('button', { name: /buscar/i }).click();
 
   await expect(page.getByText(/nenhuma cidade encontrada/i)).toBeVisible();
 });
 
-test('viewport mobile renderiza o fluxo principal', async ({ page }) => {
+test('viewport mobile renderiza o fluxo principal', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile');
+
   const forecastLatitudes: string[] = [];
   await mockApis(page, forecastLatitudes);
   await page.setViewportSize({ width: 375, height: 812 });
   await page.goto('/');
 
-  await page.getByLabel(/buscar cidade/i).fill('Seattle');
+  await page.getByRole('textbox', { name: /buscar cidade/i }).fill('Seattle');
   await page.getByRole('button', { name: /buscar/i }).click();
   await page.getByRole('button', { name: /Seattle.*Washington/i }).tap();
   await expect(page.getByRole('heading', { name: 'Seattle' })).toBeVisible();
