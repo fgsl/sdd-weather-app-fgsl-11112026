@@ -1,0 +1,132 @@
+classDiagram
+  direction LR
+
+  class App {
+    <<component>>
+    -unit: Unit
+    +render()
+  }
+  class useWeather {
+    <<hook>>
+    +status: WeatherStatus
+    +data: WeatherData
+    +cities: City[]
+    +error: string
+    +query: string
+    +search(name) Promise
+    +selectCity(city) Promise
+    +retry() Promise
+    -startRequest() AbortController
+    -loadWeather(city) Promise
+  }
+  class weatherService {
+    <<module>>
+    +searchCities(name, signal) Promise
+    +getWeather(city, signal) Promise
+  }
+  class WeatherServiceError {
+    +code: WeatherServiceErrorCode
+  }
+  class WeatherRequestCancelledError
+  class Error {
+    <<built-in>>
+  }
+  class WeatherData {
+    <<interface>>
+    +city: City
+    +current: CurrentWeather
+    +forecast: ForecastDay[]
+  }
+  class City {
+    <<interface>>
+    +id: number
+    +name: string
+    +country: string
+    +admin1: string
+    +latitude: number
+    +longitude: number
+  }
+  class CurrentWeather {
+    <<interface>>
+    +time: string
+    +temperature: number
+    +humidity: number
+    +windSpeed: number
+    +pressure: number
+    +precipitation: number
+    +weatherCode: number
+  }
+  class ForecastDay {
+    <<interface>>
+    +date: string
+    +min: number
+    +max: number
+    +weatherCode: number
+    +precipitationProbability: number
+  }
+  class SearchBar {
+    <<component>>
+    +onSearch(city)
+    +disabled: boolean
+  }
+  class CityResults {
+    <<component>>
+    +cities: City[]
+    +onSelect(city)
+  }
+  class CurrentWeatherView {
+    <<component>>
+    +city
+    +current
+    +unit
+  }
+  class ForecastList {
+    <<component>>
+    +forecast: ForecastDay[]
+    +unit: Unit
+  }
+  class ForecastCard {
+    <<component>>
+    +day: ForecastDay
+    +index: number
+    +unit: Unit
+  }
+  class UnitToggle {
+    <<component>>
+    +unit: Unit
+    +onChange(unit)
+  }
+  class StateViews {
+    <<component>>
+    LoadingState
+    ErrorState
+    EmptyState
+  }
+  class lib {
+    <<module>>
+    +convertTemperature(celsius, unit)
+    +formatTemperature(celsius, unit)
+    +getWeatherInfo(code)
+    +getDayLabel(iso, index)
+  }
+
+  App ..> useWeather : usa
+  App *-- SearchBar
+  App *-- UnitToggle
+  App *-- CityResults
+  App *-- CurrentWeatherView
+  App *-- ForecastList
+  App *-- StateViews
+  ForecastList *-- ForecastCard
+  useWeather ..> weatherService : chama
+  useWeather ..> WeatherRequestCancelledError : trata
+  weatherService ..> WeatherServiceError : lança
+  WeatherServiceError --|> Error
+  WeatherRequestCancelledError --|> Error
+  weatherService ..> WeatherData : retorna
+  WeatherData *-- City
+  WeatherData *-- CurrentWeather
+  WeatherData *-- ForecastDay
+  CityResults ..> City
+  CurrentWeatherView ..> lib : formata
+  ForecastCard ..> lib : formata

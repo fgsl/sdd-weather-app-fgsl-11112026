@@ -1,0 +1,12 @@
+stateDiagram-v2
+  [*] --> idle
+  idle --> loading: search(nome)
+  results --> loading: selectCity(city)
+  success --> loading: nova busca ou seleção
+  error --> loading: retry
+  empty --> loading: nova busca
+  loading --> results: busca retorna cidades
+  loading --> empty: busca sem resultados
+  loading --> success: clima carregado
+  loading --> error: falha validada
+  loading --> loading: requisição substituída (cancelada, sem erro visível)

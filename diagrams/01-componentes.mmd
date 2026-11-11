@@ -1,0 +1,22 @@
+flowchart TB
+    subgraph browser["Navegador (SPA React)"]
+        main["main.tsx<br/>createRoot + StrictMode"]
+        app["App.tsx<br/>composição da tela e unidade"]
+        hook["hooks/useWeather.ts<br/>máquina de estados e orquestração"]
+        comps["Componentes<br/>SearchBar, CityResults, CurrentWeatherView,<br/>ForecastList, UnitToggle, states/*"]
+        service["services/weatherService.ts<br/>fetch, timeout, validação, mapeamento"]
+        lib["lib/<br/>temperature, format, weatherCodes"]
+        types["types/weather.ts<br/>contratos de domínio"]
+    end
+
+    api[("Open-Meteo API<br/>geocoding-api.open-meteo.com<br/>api.open-meteo.com")]
+
+    main --> app
+    app --> comps
+    app --> hook
+    hook --> service
+    hook --> types
+    comps --> lib
+    comps --> types
+    service --> types
+    service -->|"HTTPS GET (sem API key)"| api

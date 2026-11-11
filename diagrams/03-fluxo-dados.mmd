@@ -1,0 +1,25 @@
+sequenceDiagram
+  autonumber
+  actor P as Pessoa
+  participant App as App.tsx
+  participant H as useWeather
+  participant S as weatherService
+  participant G as Open-Meteo Geocoding
+  participant F as Open-Meteo Forecast
+
+  P->>App: digita cidade e envia
+  App->>H: search(nome)
+  Note over H: cancela requisição anterior (AbortController)
+  H->>S: searchCities(nome, signal)
+  S->>G: GET /v1/search?name=...&count=5&language=pt
+  G-->>S: JSON com results
+  S-->>H: City[] validadas
+  H-->>App: status results (ou empty)
+  P->>App: escolhe uma cidade
+  App->>H: selectCity(city)
+  H->>S: getWeather(city, signal)
+  S->>F: GET /v1/forecast?latitude&longitude&current&daily
+  F-->>S: JSON current + daily
+  S-->>H: WeatherData validado
+  H-->>App: status success + data
+  Note over App: troca de unidade converte em memória, sem nova requisição
